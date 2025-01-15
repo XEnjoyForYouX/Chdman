@@ -1,0 +1,137 @@
+name: chdman-android-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        type: choice
+        description: 'select branch to build(default: testing-dev)'
+        required: true
+        default: 'testing-dev'
+        options: 
+        - testing-dev
+        - Backup-testing-dev
+        - PatchExternalStorage
+        - PatchUpdateMame
+        - PatchCreateCD
+        - PatchCreateDVD
+        - PatchExtractCD
+        - PatchExtractDVD
+        - PatchCreateCDPS1
+        - PatchCreateCDPS2
+        - PatchCreateCDPSP
+        - PatchCreateDVDPS1
+        - PatchCreateDVDPS2
+        - PatchCreateDVDPSP
+        - PatchExtractCDPS1
+        - PatchExtractCDPS2
+        - PatchExtractCDPSP
+        - PatchExtractDVDPS1
+        - PatchExtractDVDPS2
+        - PatchExtractDVDPSP
+
+jobs:
+  chdman_android_build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 18
+
+    - name: Download CHDMAN Android source code
+      run: |
+        cd ${{ github.workspace }}
+        git clone --branch ${{ github.event.inputs.branch }} https://github.com/XEnjoyForYouX/Chdman.git --recursive
+        cd Chdman
+        
+
+    - id: version
+      name: Get version
+      run: |
+        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        cd ${{ github.workspace }}/Chdman
+        echo "hash=$(git log -1 --pretty=format:%H)" >> $GITHUB_OUTPUT
+        echo "short_hash=$(git describe --always --long)" >> $GITHUB_OUTPUT
+        echo "version=$(git describe --tags --always)" >> $GITHUB_OUTPUT
+
+    - name: Set up cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-CHDMAN-Android-${{ steps.version.outputs.hash }}
+        restore-keys: |
+            ${{ runner.os }}-CHDMAN-Android-
+
+    #- name: Prepare environment
+    #  run: |
+    #    sudo apt-get install -y ninja-build
+    #      ln -s /usr/bin/ninja .
+    - name: Build Android Arm64-v84 Debug
+      run: |
+        cd ${{ github.workspace }}/Chdman
+        chmod +x ./gradlew
+        ./gradlew "assembleDebug"
+        # bash gradlew build
+        mv $(find app/build/outputs/apk/debug/app-arm64-v8a-debug.apk -type f | grep -E "\.apk$") ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Arm64-v84.apk
+
+    - name: Release CHDMAN (CHDMAN-Android)
+      uses: softprops/action-gh-release@v2
+      with:
+        name: CHDMAN ${{ steps.version.outputs.date }}
+        tag_name: CHDMAN
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Arm64-v84.apk
+
+    - name: Release CHDMAN ${{ steps.version.outputs.date }}
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ steps.version.outputs.date }}
+        tag_name: ${{ steps.version.outputs.date }}
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Arm64-v84.apk
+
+    - name: Build Android Armeabi v7a Debug
+      run: |
+        cd ${{ github.workspace }}/Chdman
+        chmod +x ./gradlew
+        ./gradlew "assembleDebug"
+        # bash gradlew build
+        mv $(find app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk -type f | grep -E "\.apk$") ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Armeabi-v7a.apk
+
+    - name: Release CHDMAN (CHDMAN-Android)
+      uses: softprops/action-gh-release@v2
+      with:
+        name: CHDMAN ${{ steps.version.outputs.date }}
+        tag_name: CHDMAN
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Armeabi-v7a.apk
+
+    - name: Release CHDMAN ${{ steps.version.outputs.date }}
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ steps.version.outputs.date }}
+        tag_name: ${{ steps.version.outputs.date }}
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Armeabi-v7a.apk
+
+    - name: Build Android Universal Debug
+      run: |
+        cd ${{ github.workspace }}/Chdman
+        chmod +x ./gradlew
+        ./gradlew "assembleDebug"
+        # bash gradlew build
+        mv $(find app/build/outputs/apk/debug/app-universal-debug.apk -type f | grep -E "\.apk$") ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Universal.apk
+
+    - name: Release CHDMAN (CHDMAN-Android)
+      uses: softprops/action-gh-release@v2
+      with:
+        name: CHDMAN ${{ steps.version.outputs.date }}
+        tag_name: CHDMAN
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Universal.apk
+
+    - name: Release CHDMAN ${{ steps.version.outputs.date }}
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ steps.version.outputs.date }}
+        tag_name: ${{ steps.version.outputs.date }}
+        files: ${{ github.workspace }}/CHDMAN-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}-Universal.apk
